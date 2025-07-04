@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Navigate } from 'react-router-dom';
+import LoginHistory from './LoginHistory';
 import { useAuth } from '../contexts/AuthContext';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
@@ -88,6 +89,9 @@ export const ProfileSettingsPage = () => {
             {message.text}
           </div>
         )}
+
+        {/* ログイン履歴 */}
+        <LoginHistory />
       </div>
     </div>
   );

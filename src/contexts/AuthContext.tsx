@@ -50,67 +50,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return false;
       }
 
-      console.log('Checking whitelist for email:', email);
       const normalizedEmail = email.toLowerCase().trim();
+      console.log('Checking whitelist for email:', normalizedEmail);
       
-      // まず全てのホワイトリストエントリーを取得して確認
+      // メールアドレスでホワイトリストを検索
       const whitelistRef = collection(db, 'Whitelist');
-      const allEntriesQuery = query(whitelistRef);
-      const allEntries = await getDocs(allEntriesQuery);
+      const whitelistQuery = query(whitelistRef, where('email', '==', normalizedEmail));
+      const whitelistDocs = await getDocs(whitelistQuery);
+
+      const exists = !whitelistDocs.empty;
+      console.log('Whitelist check result:', { normalizedEmail, exists });
       
-      console.log('Total whitelist entries:', allEntries.size);
-      
-      // すべてのエントリーをログに出力（詳細な比較情報を含む）
-      allEntries.forEach(doc => {
-        const data = doc.data();
-        const entryEmail = data.email?.toLowerCase?.()?.trim?.();
-        console.log('Comparing whitelist entry:', {
-          id: doc.id,
-          rawEmail: data.email,
-          normalizedEmail: entryEmail,
-          matches: entryEmail === normalizedEmail,
-          addedAt: data.addedAt?.toDate?.() || data.addedAt,
-          addedBy: data.addedBy,
-          comparison: {
-            entryLength: entryEmail?.length,
-            searchLength: normalizedEmail.length,
-            exact: entryEmail === normalizedEmail,
-            includesSearch: entryEmail?.includes(normalizedEmail),
-            searchIncludes: normalizedEmail.includes(entryEmail || ''),
-            charactersMatch: Array.from(entryEmail || '').map((char, i) => ({
-              position: i,
-              entryChar: char,
-              searchChar: normalizedEmail[i],
-              matches: char === normalizedEmail[i]
-            }))
-          }
-        });
-      });
-
-      // 直接クエリでも試してみる
-      const directQuery = query(whitelistRef, where('email', '==', normalizedEmail));
-      const directQueryResult = await getDocs(directQuery);
-      console.log('Direct query result:', {
-        found: !directQueryResult.empty,
-        count: directQueryResult.size
-      });
-
-      // メールアドレスが一致するものを探す
-      const exists = allEntries.docs.some(doc => {
-        const entryEmail = doc.data().email?.toLowerCase?.()?.trim?.();
-        const matches = entryEmail === normalizedEmail;
-        if (matches) {
-          console.log('Found matching whitelist entry:', doc.data());
-        }
-        return matches;
-      });
-
-      console.log('Final whitelist check result:', {
-        normalizedEmail,
-        exists,
-        allEntriesCount: allEntries.size,
-        directQueryFound: !directQueryResult.empty
-      });
       return exists;
     } catch (error) {
       console.error('Error checking whitelist:', error);
@@ -156,12 +106,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       } as UserData;
     }
 
+    // ホワイトリストからユーザー情報を取得
+    const whitelistQuery = query(collection(db, 'Whitelist'), where('email', '==', user.email?.toLowerCase().trim()));
+    const whitelistDocs = await getDocs(whitelistQuery);
+    
+    const whitelistData = whitelistDocs.docs[0]?.data();
+    if (!whitelistData) {
+      throw new Error('ホワイトリストエントリーが見つかりません');
+    }
+
     const newUserData = {
       uid: user.uid,
       email: user.email!,
-      displayName: user.displayName,
-      photoURL: user.photoURL,
-      role: 'member',
+      displayName: user.displayName || '',
+      photoURL: user.photoURL || '',
+      role: 'member',  // デフォルトロールは'member'
       createdAt: Timestamp.now(),
     } as UserData;
 
