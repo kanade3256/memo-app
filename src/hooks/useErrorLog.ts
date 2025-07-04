@@ -20,7 +20,7 @@ interface ErrorStore {
 
 export const useErrorLog = create<ErrorStore>()(
   devtools(
-    (set, get) => ({
+    (set) => ({
       errors: [],
       unreadCount: 0,
       logError: (error: Error, location?: string) => {
@@ -31,14 +31,14 @@ export const useErrorLog = create<ErrorStore>()(
           location,
           isRead: false,
         };
-        set(state => ({
+        set((state) => ({
           errors: [newError, ...state.errors],
           unreadCount: state.unreadCount + 1,
         }));
       },
       markAsRead: (id: string) => {
-        set(state => {
-          const updatedErrors = state.errors.map(error => 
+        set((state) => {
+          const updatedErrors = state.errors.map((error) => 
             error.id === id ? { ...error, isRead: true } : error
           );
           return {
@@ -48,8 +48,8 @@ export const useErrorLog = create<ErrorStore>()(
         });
       },
       markAllAsRead: () => {
-        set(state => ({
-          errors: state.errors.map(error => ({ ...error, isRead: true })),
+        set((state) => ({
+          errors: state.errors.map((error) => ({ ...error, isRead: true })),
           unreadCount: 0,
         }));
       },

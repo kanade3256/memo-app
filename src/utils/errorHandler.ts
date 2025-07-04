@@ -1,5 +1,6 @@
 import { FirebaseError } from 'firebase/app';
 import { useErrorLog } from '../hooks/useErrorLog';
+import { useCallback } from 'react';
 
 // Firebase エラーメッセージの日本語化
 const firebaseErrorMessages: Record<string, string> = {
@@ -17,7 +18,7 @@ const firebaseErrorMessages: Record<string, string> = {
 export const useErrorHandler = () => {
   const { logError } = useErrorLog();
 
-  const handleError = (error: unknown, location?: string) => {
+  const handleError = useCallback((error: unknown, location?: string) => {
     console.error('Error occurred:', error);
 
     if (error instanceof FirebaseError) {
@@ -32,7 +33,7 @@ export const useErrorHandler = () => {
     }
 
     logError(new Error('予期せぬエラーが発生しました'), location);
-  };
+  }, [logError]);
 
   return { handleError };
 };

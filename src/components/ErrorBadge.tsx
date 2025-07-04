@@ -50,7 +50,7 @@ export const ErrorBadge = () => {
                 <p className="text-gray-500 text-center py-4">エラーはありません</p>
               ) : (
                 <ul className="space-y-4">
-                  {errors.map(error => (
+                  {errors.map((error) => (
                     <li
                       key={error.id}
                       className={`p-4 rounded-lg border ${

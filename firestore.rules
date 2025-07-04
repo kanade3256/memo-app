@@ -50,6 +50,12 @@ service cloud.firestore {
          (request.auth.uid == userId && 
           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName', 'photoURL'])));
       allow delete: if isAuthenticated() && isUserProfessorOrDeveloper();
+      
+      // サブコレクションのルール
+      match /loginHistory/{historyId} {
+        allow read, list: if isAuthenticated() && userId == request.auth.uid;
+        allow create: if isAuthenticated() && userId == request.auth.uid;
+      }
     }
 
     match /threads/{threadId} {
@@ -73,6 +79,12 @@ service cloud.firestore {
     match /accessAttempts/{logId} {
       allow read: if isAuthenticated() && isUserProfessorOrDeveloper();
       allow create: if true;
+    }
+
+    match /sessions/{sessionId} {
+      allow read: if isAuthenticated() && request.auth.uid == resource.data.uid;
+      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.uid;
+      allow update, delete: if isAuthenticated() && request.auth.uid == resource.data.uid;
     }
   }
 }
