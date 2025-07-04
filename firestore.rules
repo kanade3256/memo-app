@@ -1,0 +1,47 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isWhitelisted() {
+      return exists(/databases/$(database)/documents/Whitelist/$(request.auth.token.email));
+    }
+
+    function isProfessorOrDeveloper(userId) {
+      let user = get(/databases/$(database)/documents/users/$(userId)).data;
+      return user.role == 'professor' || user.role == 'developer';
+    }
+
+    match /Whitelist/{document} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && isProfessorOrDeveloper(request.auth.uid);
+    }
+
+    match /users/{userId} {
+      allow read: if isAuthenticated() && (request.auth.uid == userId || isProfessorOrDeveloper(request.auth.uid));
+      allow create: if isAuthenticated() && isWhitelisted() && request.auth.uid == userId;
+      allow update: if isAuthenticated() && isProfessorOrDeveloper(request.auth.uid);
+    }
+
+    match /threads/{threadId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isProfessorOrDeveloper(request.auth.uid);
+      allow update, delete: if isAuthenticated() && (
+        isProfessorOrDeveloper(request.auth.uid) || 
+        resource.data.createdBy == request.auth.token.email
+      );
+    }
+
+    match /threads/{threadId}/notes/{noteId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated() && (
+        isProfessorOrDeveloper(request.auth.uid) || 
+        resource.data.createdBy == request.auth.token.email
+      );
+    }
+  }
+}
