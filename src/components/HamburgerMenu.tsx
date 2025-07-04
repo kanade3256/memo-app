@@ -6,6 +6,7 @@ import {
   HomeIcon,
   UserPlusIcon,
   UserCircleIcon,
+  UsersIcon,
   ArrowRightOnRectangleIcon,
 } from '@heroicons/react/24/outline';
 import type { UserRole } from '../types/auth';
@@ -55,6 +56,19 @@ export const HamburgerMenu = ({ userRole, onSignOut }: HamburgerMenuProps) => {
                 >
                   <UserCircleIcon className="h-5 w-5" />
                   プロフィール設定
+                </Link>
+              )}
+            </Menu.Item>
+            <Menu.Item>
+              {({ active }) => (
+                <Link
+                  to="/members"
+                  className={`${
+                    active ? 'bg-gray-100' : ''
+                  } flex items-center gap-3 px-4 py-2 text-sm text-gray-700`}
+                >
+                  <UsersIcon className="h-5 w-5" />
+                  メンバー一覧
                 </Link>
               )}
             </Menu.Item>

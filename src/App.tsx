@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { UsersProvider, useUsers } from './contexts/UsersContext';
+import { MembersPage } from './components/MembersPage';
 import { Login } from './components/Login';
 import { ThreadsList } from './components/ThreadsList';
 import { NotesList } from './components/NotesList';
@@ -11,6 +13,7 @@ import { HamburgerMenu } from './components/HamburgerMenu';
 
 const AppContent = () => {
   const { userData, loading, error, signOut, isAuthorized } = useAuth();
+  const { getDisplayName } = useUsers();
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
 
   if (loading) {
@@ -47,7 +50,7 @@ const AppContent = () => {
               <div className="flex items-center gap-3">
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
                 <span className="text-gray-600 font-medium">
-                  {userData.email}
+                  {getDisplayName(userData.email)}
                 </span>
                 <RoleBadge role={userData.role} />
               </div>
@@ -71,6 +74,7 @@ const AppContent = () => {
                     userEmail={userData.email}
                     userRole={userData.role}
                     onSelectThread={setSelectedThreadId}
+                    getDisplayName={getDisplayName}
                   />
                 </div>
               ) : (
@@ -90,6 +94,7 @@ const AppContent = () => {
                       threadId={selectedThreadId}
                       userEmail={userData.email}
                       userRole={userData.role}
+                      getDisplayName={getDisplayName}
                     />
                   </div>
                 </div>
@@ -110,6 +115,10 @@ const AppContent = () => {
             path="/profile-settings"
             element={<ProfileSettingsPage />}
           />
+          <Route
+            path="/members"
+            element={<MembersPage />}
+          />
         </Routes>
       </main>
     </div>
@@ -119,9 +128,11 @@ const AppContent = () => {
 function App() {
   return (
     <AuthProvider>
-      <Router>
-        <AppContent />
-      </Router>
+      <UsersProvider>
+        <Router>
+          <AppContent />
+        </Router>
+      </UsersProvider>
     </AuthProvider>
   );
 }

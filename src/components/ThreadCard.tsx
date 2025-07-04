@@ -12,6 +12,7 @@ interface ThreadCardProps {
   onSelect: () => void;
   onEdit: (title: string) => Promise<void>;
   onDelete: () => Promise<void>;
+  getDisplayName: (email: string) => string;
 }
 
 export const ThreadCard = ({
@@ -21,6 +22,7 @@ export const ThreadCard = ({
   onSelect,
   onEdit,
   onDelete,
+  getDisplayName,
 }: ThreadCardProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [newTitle, setNewTitle] = useState(thread.title);
@@ -122,7 +124,7 @@ export const ThreadCard = ({
           </>
         )}
         <div className="mt-2 text-sm text-gray-500">
-          作成者: {thread.createdBy}
+          作成者: {getDisplayName(thread.createdBy)}
         </div>
         <div className="text-xs text-gray-400">
           {thread.createdAt.toDate().toLocaleString('ja-JP', {

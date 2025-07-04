@@ -21,9 +21,10 @@ interface ThreadsListProps {
   userEmail: string;
   userRole: UserRole;
   onSelectThread: (threadId: string) => void;
+  getDisplayName: (email: string) => string;
 }
 
-export const ThreadsList = ({ userEmail, userRole, onSelectThread }: ThreadsListProps) => {
+export const ThreadsList = ({ userEmail, userRole, onSelectThread, getDisplayName }: ThreadsListProps) => {
   const [threads, setThreads] = useState<Thread[]>([]);
   const [newThreadTitle, setNewThreadTitle] = useState('');
   const [isFormVisible, setIsFormVisible] = useState(false);
@@ -133,6 +134,7 @@ export const ThreadsList = ({ userEmail, userRole, onSelectThread }: ThreadsList
             onSelect={() => onSelectThread(thread.id)}
             onEdit={(title) => handleEditThread(thread.id, title)}
             onDelete={() => handleDeleteThread(thread.id)}
+            getDisplayName={getDisplayName}
           />
         ))}
       </div>

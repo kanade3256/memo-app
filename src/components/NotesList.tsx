@@ -22,11 +22,12 @@ interface NotesListProps {
   threadId: string;
   userEmail: string;
   userRole: UserRole;
+  getDisplayName: (email: string) => string;
 }
 
 const COLORS = ['yellow', 'green', 'blue', 'pink', 'purple'];
 
-export const NotesList = ({ threadId, userEmail, userRole }: NotesListProps) => {
+export const NotesList = ({ threadId, userEmail, userRole, getDisplayName }: NotesListProps) => {
   const [notes, setNotes] = useState<Note[]>([]);
   const [newNote, setNewNote] = useState({ text: '', color: 'yellow' });
   const [isFormVisible, setIsFormVisible] = useState(false);
@@ -149,6 +150,7 @@ export const NotesList = ({ threadId, userEmail, userRole }: NotesListProps) => 
             key={note.id}
             note={note}
             userEmail={userEmail}
+            getDisplayName={getDisplayName}
             onEdit={async (noteId, text, color) => {
               const noteRef = doc(db, `threads/${threadId}/notes`, noteId);
               await updateDoc(noteRef, {
