@@ -11,9 +11,10 @@ interface NoteCardProps {
   userEmail: string;
   onEdit: (noteId: string, text: string, color: string) => Promise<void>;
   onDelete: (noteId: string) => Promise<void>;
+  getDisplayName: (email: string) => string;
 }
 
-export const NoteCard = ({ note, userEmail, onEdit, onDelete }: NoteCardProps) => {
+export const NoteCard = ({ note, userEmail, onEdit, onDelete, getDisplayName }: NoteCardProps) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const isOwner = note.createdBy === userEmail;
@@ -84,7 +85,7 @@ export const NoteCard = ({ note, userEmail, onEdit, onDelete }: NoteCardProps) =
         </p>
         <div className="mt-4 pt-3 border-t border-gray-200 text-sm text-gray-600">
           <div className="flex items-center justify-between">
-            <span className="truncate max-w-[180px]">{note.createdBy}</span>
+            <span className="truncate max-w-[180px]">{getDisplayName(note.createdBy)}</span>
             <span className="text-xs">
               {note.createdAt.toDate().toLocaleString('ja-JP', {
                 month: 'short',
