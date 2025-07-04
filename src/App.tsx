@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { ErrorBadge } from './components/ErrorBadge';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { UsersProvider, useUsers } from './contexts/UsersContext';
 import { MembersPage } from './components/MembersPage';
@@ -131,6 +132,7 @@ function App() {
       <UsersProvider>
         <Router>
           <AppContent />
+          <ErrorBadge />
         </Router>
       </UsersProvider>
     </AuthProvider>

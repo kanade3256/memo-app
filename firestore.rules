@@ -7,23 +7,49 @@ service cloud.firestore {
     }
 
     function isWhitelisted() {
-      return exists(/databases/$(database)/documents/Whitelist/$(request.auth.token.email));
+      return request.auth != null && request.auth.token.email != null;
+    }
+
+    function getWhitelistByEmail(email) {
+      let whitelists = getAfter(/databases/$(database)/documents/Whitelist);
+      return whitelists != null && whitelists.data != null && whitelists.data.email == email;
+    }
+
+    function getUserData(userId) {
+      let userDoc = get(/databases/$(database)/documents/users/$(userId));
+      return userDoc != null ? userDoc.data : null;
+    }
+
+    function isUserProfessorOrDeveloper() {
+      return request.auth != null && exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['professor', 'developer'];
     }
 
     function isProfessorOrDeveloper(userId) {
-      let user = get(/databases/$(database)/documents/users/$(userId)).data;
-      return user.role == 'professor' || user.role == 'developer';
+      return exists(/databases/$(database)/documents/users/$(userId)) &&
+             get(/databases/$(database)/documents/users/$(userId)).data.role in ['professor', 'developer'];
     }
 
-    match /Whitelist/{document} {
-      allow read: if isAuthenticated();
-      allow write: if isAuthenticated() && isProfessorOrDeveloper(request.auth.uid);
+    match /Whitelist/{whitelistId} {
+      allow read: if true;  // ホワイトリストの読み取りは認証なしで許可
+      allow list: if isAuthenticated();  // リスト表示は認証済みユーザーのみ
+      allow create: if isAuthenticated() && (
+        !exists(/databases/$(database)/documents/users/*) || // 最初のユーザーは自動的に教授権限
+        isUserProfessorOrDeveloper() // 既存の教授/開発者
+      );
+      allow update, delete: if isAuthenticated() && isUserProfessorOrDeveloper();
     }
 
     match /users/{userId} {
-      allow read: if isAuthenticated() && (request.auth.uid == userId || isProfessorOrDeveloper(request.auth.uid));
-      allow create: if isAuthenticated() && isWhitelisted() && request.auth.uid == userId;
-      allow update: if isAuthenticated() && isProfessorOrDeveloper(request.auth.uid);
+      allow read, list: if isAuthenticated();  // list操作を明示的に許可
+      allow create: if isAuthenticated() && 
+        ((request.auth.uid == userId && request.resource.data.email == request.auth.token.email) ||
+         (!exists(/databases/$(database)/documents/users/*) && request.resource.data.role == 'professor'));
+      allow update: if isAuthenticated() && 
+        (isUserProfessorOrDeveloper() ||
+         (request.auth.uid == userId && 
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName', 'photoURL'])));
+      allow delete: if isAuthenticated() && isUserProfessorOrDeveloper();
     }
 
     match /threads/{threadId} {
@@ -42,6 +68,11 @@ service cloud.firestore {
         isProfessorOrDeveloper(request.auth.uid) || 
         resource.data.createdBy == request.auth.token.email
       );
+    }
+
+    match /accessAttempts/{logId} {
+      allow read: if isAuthenticated() && isUserProfessorOrDeveloper();
+      allow create: if true;
     }
   }
 }

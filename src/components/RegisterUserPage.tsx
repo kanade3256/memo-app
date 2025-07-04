@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { collection, addDoc, query, where, getDocs, serverTimestamp } from 'firebase/firestore';
+import { doc, collection, query, where, getDocs, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 
 export const RegisterUserPage = () => {
   const [email, setEmail] = useState('');
+  const [role, setRole] = useState<'member' | 'developer' | 'professor'>('member');
   const [message, setMessage] = useState({ type: '', text: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { userData } = useAuth();
@@ -22,23 +23,27 @@ export const RegisterUserPage = () => {
       setIsSubmitting(true);
       setMessage({ type: '', text: '' });
 
+      const normalizedEmail = email.toLowerCase();
+      
       // メールアドレスの重複チェック
-      const whitelistQuery = query(
-        collection(db, 'whitelist'),
-        where('email', '==', email.toLowerCase())
-      );
-      const whitelistSnapshot = await getDocs(whitelistQuery);
+      const whitelistQuery = query(collection(db, 'Whitelist'), where('email', '==', normalizedEmail));
+      const whitelistDocs = await getDocs(whitelistQuery);
 
-      if (!whitelistSnapshot.empty) {
+      if (!whitelistDocs.empty) {
         setMessage({ type: 'error', text: 'このメールアドレスは既に登録されています' });
         return;
       }
 
-      // ホワイトリストに追加
-      await addDoc(collection(db, 'whitelist'), {
-        email: email.toLowerCase(),
+      // ランダムなIDを生成
+      const whitelistId = Math.random().toString(36).substring(2, 15) + 
+                         Math.random().toString(36).substring(2, 15);
+      
+      // Whitelistに追加
+      await setDoc(doc(db, 'Whitelist', whitelistId), {
+        email: normalizedEmail,
+        role: role,
         addedAt: serverTimestamp(),
-        addedBy: userData.uid
+        addedBy: userData.email || 'admin'
       });
 
       setMessage({ type: 'success', text: 'ユーザーを登録しました' });
@@ -69,6 +74,22 @@ export const RegisterUserPage = () => {
             placeholder="example@example.com"
             required
           />
+        </div>
+
+        <div className="mb-4">
+          <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-2">
+            ロール
+          </label>
+          <select
+            id="role"
+            value={role}
+            onChange={(e) => setRole(e.target.value as 'member' | 'developer' | 'professor')}
+            className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="member">メンバー</option>
+            <option value="developer">開発者</option>
+            <option value="professor">教授</option>
+          </select>
         </div>
 
         <button

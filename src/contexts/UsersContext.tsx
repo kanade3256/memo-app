@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { collection, query, getDocs, orderBy } from 'firebase/firestore';
+import { collection, query, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
 import type { UserData } from '../types/auth';
 
@@ -30,10 +30,11 @@ export const UsersProvider = ({ children }: { children: ReactNode }) => {
       setLoading(true);
       setError(null);
       const usersRef = collection(db, 'users');
-      const q = query(usersRef);
+      const q = query(usersRef);  // シンプルなクエリに変更
       const snapshot = await getDocs(q);
       const usersData = snapshot.docs.map(doc => ({
         ...doc.data(),
+        uid: doc.id  // documentIDを明示的に含める
       } as UserData));
 
       // ロール順 → 表示名順でソート
