@@ -1,6 +1,7 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
+import type { ReactNode } from 'react';
 import { collection, query, getDocs } from 'firebase/firestore';
-import { db } from '../firebase';
+import { db } from '../config/firebase';
 import type { UserData } from '../types/auth';
 
 interface UsersContextType {

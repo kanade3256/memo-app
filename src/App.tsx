@@ -1,18 +1,20 @@
 import { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { ErrorBadge } from './components/ErrorBadge';
+import { ErrorBadge } from './components/ui/ErrorBadge';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { UsersProvider, useUsers } from './contexts/UsersContext';
-import { MembersPage } from './components/MembersPage';
-import { Login } from './components/Login';
-import { ThreadsList } from './components/ThreadsList';
-import { NotesList } from './components/NotesList';
-import { RoleBadge } from './components/RoleBadge';
-import { RegisterUserPage } from './components/RegisterUserPage';
-import { ProfileSettingsPage } from './components/ProfileSettingsPage';
-import { HamburgerMenu } from './components/HamburgerMenu';
-import DeveloperDashboard from './components/DeveloperDashboard';
+import { ToastProvider } from './contexts/ToastContext';
+import { MembersPage } from './components/admin/MembersPage';
+import { Login } from './components/auth/Login';
+import { ThreadsList } from './components/threads/ThreadsList';
+import { NotesList } from './components/notes/NotesList';
+import { RoleBadge } from './components/ui/RoleBadge';
+import { RegisterUserPage } from './components/auth/RegisterUserPage';
+import { ProfileSettingsPage } from './components/auth/ProfileSettingsPage';
+import { HamburgerMenu } from './components/ui/HamburgerMenu';
+import { DeveloperDashboard } from './components/admin/DeveloperDashboard';
+import { ThreadSettingsPage } from './components/threads/ThreadSettingsPage';
 
 const AppContent = () => {
   const { userData, loading, error, signOut, isAuthorized } = useAuth();
@@ -161,6 +163,10 @@ const AppContent = () => {
               )
             }
           />
+          <Route
+            path="/create-thread"
+            element={<ThreadSettingsPage />}
+          />
         </Routes>
       </main>
     </div>
@@ -172,10 +178,12 @@ function App() {
     <AuthProvider>
       <UsersProvider>
         <ThemeProvider>
-          <Router>
-            <AppContent />
-            <ErrorBadge />
-          </Router>
+          <ToastProvider>
+            <Router>
+              <AppContent />
+              <ErrorBadge />
+            </Router>
+          </ToastProvider>
         </ThemeProvider>
       </UsersProvider>
     </AuthProvider>

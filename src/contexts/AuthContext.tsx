@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
+import type { ReactNode } from 'react';
 import {
   signInWithPopup,
   GoogleAuthProvider,
@@ -19,8 +20,33 @@ import {
   serverTimestamp,
   Timestamp,
 } from 'firebase/firestore';
-import { auth, db } from '../firebase';
+import { auth, db } from '../config/firebase';
 import type { UserRole, UserData } from '../types/auth';
+
+// ブロックされたユーザーかチェック
+const checkIfBlocked = async (email: string): Promise<boolean> => {
+  try {
+    const normalizedEmail = email.toLowerCase().trim();
+    console.log('Checking if user is blocked:', normalizedEmail);
+    
+    const blockedRef = collection(db, 'blockedUsers');
+    const blockedQuery = query(
+      blockedRef, 
+      where('email', '==', normalizedEmail),
+      where('isActive', '==', true)
+    );
+    const blockedDocs = await getDocs(blockedQuery);
+
+    const isBlocked = !blockedDocs.empty;
+    console.log('Block check result:', { normalizedEmail, isBlocked });
+    
+    return isBlocked;
+  } catch (error) {
+    console.error('Error checking if user is blocked:', error);
+    // エラーの場合はブロックされていないとみなす（フェイルオープン）
+    return false;
+  }
+};
 
 interface AuthContextType {
   user: User | null;
@@ -133,7 +159,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       try {
         if (currentUser) {
-          // ホワイトリストチェック
+          // ホワイトリストチェック（優先）
           const isWhitelisted = await checkWhitelist(currentUser.email!);
           
           if (!isWhitelisted) {
@@ -143,14 +169,36 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setIsAuthorized(false);
             setUser(null);
             setUserData(null);
-          } else {
-            await logAccessAttempt(currentUser.email!, 'approved');
-            const userData = await getOrCreateUserData(currentUser);
-            setUser(currentUser);
-            setUserData(userData);
-            setIsAuthorized(true);
-            setError(null);
+            setLoading(false);
+            return;
           }
+
+          // ブロックチェック（セカンダリ）
+          try {
+            const isBlocked = await checkIfBlocked(currentUser.email!);
+            
+            if (isBlocked) {
+              await logAccessAttempt(currentUser.email!, 'denied');
+              await firebaseSignOut(auth);
+              setError('このアカウントはブロックされています');
+              setIsAuthorized(false);
+              setUser(null);
+              setUserData(null);
+              setLoading(false);
+              return;
+            }
+          } catch (blockCheckError) {
+            console.warn('Block check failed, proceeding with login:', blockCheckError);
+            // ブロックチェックに失敗してもログインを継続
+          }
+
+          // ユーザーデータの取得
+          await logAccessAttempt(currentUser.email!, 'approved');
+          const userData = await getOrCreateUserData(currentUser);
+          setUser(currentUser);
+          setUserData(userData);
+          setIsAuthorized(true);
+          setError(null);
         } else {
           setUser(null);
           setUserData(null);
@@ -248,6 +296,71 @@ export const updateUserRole = async (userId: string, newRole: UserRole) => {
     return true;
   } catch (error) {
     console.error('Error updating user role:', error);
+    throw error;
+  }
+};
+
+// ユーザーをブロックする関数
+export const blockUser = async (email: string, reason: string, blockedByEmail: string) => {
+  try {
+    const normalizedEmail = email.toLowerCase().trim();
+    console.log('Blocking user:', normalizedEmail);
+    
+    // 既存のブロックエントリーをチェック
+    const blockedRef = collection(db, 'blockedUsers');
+    const existingQuery = query(blockedRef, where('email', '==', normalizedEmail));
+    const existingDocs = await getDocs(existingQuery);
+    
+    if (!existingDocs.empty) {
+      // 既存のエントリーを更新
+      const docRef = doc(db, 'blockedUsers', existingDocs.docs[0].id);
+      await updateDoc(docRef, {
+        isActive: true,
+        blockedAt: serverTimestamp(),
+        blockedBy: blockedByEmail,
+        reason: reason
+      });
+    } else {
+      // 新しいエントリーを作成
+      await addDoc(blockedRef, {
+        email: normalizedEmail,
+        blockedAt: serverTimestamp(),
+        blockedBy: blockedByEmail,
+        reason: reason,
+        isActive: true
+      });
+    }
+    
+    console.log('Successfully blocked user:', normalizedEmail);
+    return true;
+  } catch (error) {
+    console.error('Error blocking user:', error);
+    throw error;
+  }
+};
+
+// ユーザーのブロックを解除する関数
+export const unblockUser = async (email: string) => {
+  try {
+    const normalizedEmail = email.toLowerCase().trim();
+    console.log('Unblocking user:', normalizedEmail);
+    
+    const blockedRef = collection(db, 'blockedUsers');
+    const blockedQuery = query(blockedRef, where('email', '==', normalizedEmail));
+    const blockedDocs = await getDocs(blockedQuery);
+    
+    if (!blockedDocs.empty) {
+      const docRef = doc(db, 'blockedUsers', blockedDocs.docs[0].id);
+      await updateDoc(docRef, {
+        isActive: false
+      });
+      console.log('Successfully unblocked user:', normalizedEmail);
+      return true;
+    }
+    
+    return false;
+  } catch (error) {
+    console.error('Error unblocking user:', error);
     throw error;
   }
 };

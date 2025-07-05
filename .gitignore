@@ -29,6 +29,9 @@ dist-ssr/
 # Firebase
 .firebase/
 .firebase-debug.log
+firebase-debug.log
+*-debug.log
+pglite-debug.log
 
 # Tailwind
 *.css.map
@@ -58,4 +61,17 @@ coverage/
 *.iml
 *.ipr
 *.iws
-.idea/
+
+# Development files
+*.test.*
+*-simplified.*
+*-test.*
+
+# Documents (if they contain sensitive info)
+documents/
+
+# Duplicate config files
+tailwind.config.js
+tailwind.config.cjs
+postcss.config.js
+postcss.config.cjs

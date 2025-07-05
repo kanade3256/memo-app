@@ -23,3 +23,12 @@ export interface AccessAttempt {
   status: 'denied' | 'approved';
   message?: string;
 }
+
+export interface BlockedUser {
+  id?: string;
+  email: string;
+  blockedAt: Timestamp;
+  blockedBy: string;
+  reason?: string;
+  isActive: boolean;
+}

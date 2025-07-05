@@ -60,7 +60,7 @@ service cloud.firestore {
 
     match /threads/{threadId} {
       allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && isProfessorOrDeveloper(request.auth.uid);
+      allow create: if isAuthenticated();
       allow update, delete: if isAuthenticated() && (
         isProfessorOrDeveloper(request.auth.uid) || 
         resource.data.createdBy == request.auth.token.email
@@ -70,7 +70,13 @@ service cloud.firestore {
     match /threads/{threadId}/notes/{noteId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated();
-      allow update, delete: if isAuthenticated() && (
+      allow update: if isAuthenticated() && (
+        isProfessorOrDeveloper(request.auth.uid) || 
+        resource.data.createdBy == request.auth.token.email ||
+        // リアクション機能のために、reactionsフィールドのみの更新を許可
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reactions'])
+      );
+      allow delete: if isAuthenticated() && (
         isProfessorOrDeveloper(request.auth.uid) || 
         resource.data.createdBy == request.auth.token.email
       );
@@ -85,6 +91,11 @@ service cloud.firestore {
       allow read: if isAuthenticated() && request.auth.uid == resource.data.uid;
       allow create: if isAuthenticated() && request.auth.uid == request.resource.data.uid;
       allow update, delete: if isAuthenticated() && request.auth.uid == resource.data.uid;
+    }
+
+    match /blockedUsers/{blockId} {
+      allow read, list: if isAuthenticated();
+      allow create, update, delete: if isAuthenticated() && isUserProfessorOrDeveloper();
     }
   }
 }
