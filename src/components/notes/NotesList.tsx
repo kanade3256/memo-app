@@ -79,6 +79,41 @@ export const NotesList = ({ threadId, userEmail, userRole, getDisplayName }: Not
     return colors[color] || 'bg-yellow-100';
   };
 
+  const handleReaction = async (noteId: string, emoji: string) => {
+    try {
+      const noteRef = doc(db, `threads/${threadId}/notes`, noteId);
+      const note = notes.find(n => n.id === noteId);
+      if (!note) return;
+
+      const currentReactions = (note as any).reactions || {};
+      const userReactions = currentReactions[emoji] || [];
+      
+      let updatedReactions;
+      if (userReactions.includes(userEmail)) {
+        // リアクションを削除
+        updatedReactions = {
+          ...currentReactions,
+          [emoji]: userReactions.filter((email: string) => email !== userEmail)
+        };
+        // 空の配列の場合は削除
+        if (updatedReactions[emoji].length === 0) {
+          delete updatedReactions[emoji];
+        }
+      } else {
+        // リアクションを追加
+        updatedReactions = {
+          ...currentReactions,
+          [emoji]: [...userReactions, userEmail]
+        };
+      }
+
+      await updateDoc(noteRef, { reactions: updatedReactions });
+      await fetchNotes(); // リストを更新
+    } catch (error) {
+      console.error('Error updating reaction:', error);
+    }
+  };
+
   return (
     <div className="w-full max-w-4xl mx-auto">
       <div className="flex justify-between items-center mb-6">
@@ -148,7 +183,15 @@ export const NotesList = ({ threadId, userEmail, userRole, getDisplayName }: Not
           .map((note) => (
           <NoteCard
             key={note.id}
-            note={note}
+            note={{
+              id: note.id,
+              text: note.text,
+              createdAt: note.createdAt.toDate(),
+              userId: note.createdBy,
+              userEmail: note.createdBy,
+              color: note.color,
+              reactions: (note as any).reactions || {}
+            }}
             userEmail={userEmail}
             getDisplayName={getDisplayName}
             onEdit={async (noteId, text, color) => {
@@ -164,6 +207,7 @@ export const NotesList = ({ threadId, userEmail, userRole, getDisplayName }: Not
               await deleteDoc(noteRef);
               await fetchNotes();
             }}
+            onReaction={handleReaction}
           />
         ))}
       </div>

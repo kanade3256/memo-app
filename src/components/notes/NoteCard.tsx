@@ -1,23 +1,53 @@
 import { useState } from 'react';
 import { Menu, Transition } from '@headlessui/react';
-import { EllipsisVerticalIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { 
+  EllipsisVerticalIcon, 
+  PencilIcon, 
+  TrashIcon,
+  HandThumbUpIcon,
+  HeartIcon,
+  FaceSmileIcon,
+  EyeIcon
+} from '@heroicons/react/24/outline';
+import {
+  HandThumbUpIcon as HandThumbUpIconSolid,
+  HeartIcon as HeartIconSolid,
+  FaceSmileIcon as FaceSmileIconSolid
+} from '@heroicons/react/24/solid';
 import { Fragment } from 'react';
-import type { Note } from '../../types';
 import { EditNoteModal } from './EditNoteModal';
 import { DeleteNoteDialog } from './DeleteNoteDialog';
+import { FullNoteModal } from './FullNoteModal';
 
 interface NoteCardProps {
-  note: Note;
+  note: {
+    id: string;
+    text: string;
+    createdAt: Date;
+    userId: string;
+    userEmail: string;
+    color: string;
+    reactions?: { [emoji: string]: string[] };
+  };
   userEmail: string;
   onEdit: (noteId: string, text: string, color: string) => Promise<void>;
   onDelete: (noteId: string) => Promise<void>;
+  onReaction?: (noteId: string, emoji: string) => Promise<void>;
   getDisplayName: (email: string) => string;
 }
 
-export const NoteCard = ({ note, userEmail, onEdit, onDelete, getDisplayName }: NoteCardProps) => {
+export const NoteCard = ({ note, userEmail, onEdit, onDelete, onReaction, getDisplayName }: NoteCardProps) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const isOwner = note.createdBy === userEmail;
+  const [isFullModalOpen, setIsFullModalOpen] = useState(false);
+  const isOwner = note.userEmail === userEmail;
+
+  // リアクションボタンの設定
+  const reactionButtons = [
+    { emoji: '👍', icon: HandThumbUpIcon, solidIcon: HandThumbUpIconSolid },
+    { emoji: '❤️', icon: HeartIcon, solidIcon: HeartIconSolid },
+    { emoji: '😊', icon: FaceSmileIcon, solidIcon: FaceSmileIconSolid },
+  ];
 
   const handleEdit = async (text: string, color: string) => {
     await onEdit(note.id, text, color);
@@ -28,6 +58,30 @@ export const NoteCard = ({ note, userEmail, onEdit, onDelete, getDisplayName }: 
     await onDelete(note.id);
     setIsDeleteDialogOpen(false);
   };
+
+  const handleReaction = async (emoji: string) => {
+    if (onReaction) {
+      await onReaction(note.id, emoji);
+    }
+  };
+
+  // リアクション数を取得
+  const getReactionCount = (emoji: string) => {
+    return note.reactions?.[emoji]?.length || 0;
+  };
+
+  // ユーザーがリアクションしているかチェック
+  const hasUserReacted = (emoji: string) => {
+    return note.reactions?.[emoji]?.includes(userEmail) || false;
+  };
+
+  // リード文を表示する関数
+  const getPreviewText = (text: string, maxLength: number = 50) => {
+    return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+  };
+
+  // 全文表示が必要かどうか判定
+  const needsFullView = note.text.length > 50;
 
   return (
     <>
@@ -80,19 +134,66 @@ export const NoteCard = ({ note, userEmail, onEdit, onDelete, getDisplayName }: 
           </Menu>
         )}
 
-        <p className="text-gray-800 whitespace-pre-wrap text-base leading-relaxed mb-4">
-          {note.text}
-        </p>
+        <div className="mb-4">
+          <p className="text-gray-700 text-sm leading-relaxed">
+            {getPreviewText(note.text)}
+          </p>
+          {needsFullView && (
+            <button
+              onClick={() => setIsFullModalOpen(true)}
+              className="inline-flex items-center mt-2 text-xs text-blue-600 hover:text-blue-800 transition-colors"
+            >
+              <EyeIcon className="w-3 h-3 mr-1" />
+              🔍 全文を表示
+            </button>
+          )}
+        </div>
+
+        {/* リアクション表示 */}
+        {onReaction && (
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex space-x-2">
+              {reactionButtons.map(({ emoji, icon: Icon, solidIcon: SolidIcon }) => {
+                const count = getReactionCount(emoji);
+                const hasReacted = hasUserReacted(emoji);
+                const IconComponent = hasReacted ? SolidIcon : Icon;
+                
+                return (
+                  <button
+                    key={emoji}
+                    onClick={() => handleReaction(emoji)}
+                    className={`flex items-center space-x-1 px-2 py-1 rounded-full text-xs transition-colors ${
+                      hasReacted 
+                        ? 'bg-blue-100 text-blue-700 border border-blue-200' 
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200 border border-gray-200'
+                    }`}
+                  >
+                    <IconComponent className="w-3 h-3" />
+                    {count > 0 && <span className="font-medium">{count}</span>}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
         <div className="mt-4 pt-3 border-t border-gray-200 text-sm text-gray-600">
           <div className="flex items-center justify-between">
-            <span className="truncate max-w-[180px]">{getDisplayName(note.createdBy)}</span>
+            <span className="truncate max-w-[180px]">{getDisplayName(note.userEmail)}</span>
             <span className="text-xs">
-              {note.createdAt.toDate().toLocaleString('ja-JP', {
-                month: 'short',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
+              {note.createdAt instanceof Date 
+                ? note.createdAt.toLocaleString('ja-JP', {
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })
+                : new Date(note.createdAt).toLocaleString('ja-JP', {
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })
+              }
             </span>
           </div>
         </div>
@@ -110,6 +211,29 @@ export const NoteCard = ({ note, userEmail, onEdit, onDelete, getDisplayName }: 
         isOpen={isDeleteDialogOpen}
         onClose={() => setIsDeleteDialogOpen(false)}
         onConfirm={handleDelete}
+      />
+
+      <FullNoteModal
+        isOpen={isFullModalOpen}
+        onClose={() => setIsFullModalOpen(false)}
+        note={{
+          id: note.id,
+          title: '', // タイトルがない場合は空文字
+          text: note.text,
+          color: note.color,
+          createdAt: note.createdAt,
+          createdBy: note.userEmail,
+          threadId: '', // threadIdは使用しないので空文字
+          reactions: Object.entries(note.reactions || {}).flatMap(([emoji, users]) =>
+            users.map(userId => ({
+              id: `${note.id}-${emoji}-${userId}`,
+              userId,
+              emoji,
+              createdAt: new Date()
+            }))
+          )
+        }}
+        getDisplayName={getDisplayName}
       />
     </>
   );
