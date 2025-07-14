@@ -6,8 +6,7 @@ import {
   TrashIcon,
   HandThumbUpIcon,
   HeartIcon,
-  FaceSmileIcon,
-  EyeIcon
+  FaceSmileIcon
 } from '@heroicons/react/24/outline';
 import {
   HandThumbUpIcon as HandThumbUpIconSolid,
@@ -22,6 +21,7 @@ import { FullNoteModal } from './FullNoteModal';
 interface NoteCardProps {
   note: {
     id: string;
+    title?: string; // タイトルを追加（任意）
     text: string;
     createdAt: Date;
     userId: string;
@@ -34,9 +34,22 @@ interface NoteCardProps {
   onDelete: (noteId: string) => Promise<void>;
   onReaction?: (noteId: string, emoji: string) => Promise<void>;
   getDisplayName: (email: string) => string;
+  isSelectionMode?: boolean;
+  isSelected?: boolean;
+  onSelectionChange?: (noteId: string, selected: boolean) => void;
 }
 
-export const NoteCard = ({ note, userEmail, onEdit, onDelete, onReaction, getDisplayName }: NoteCardProps) => {
+export const NoteCard = ({ 
+  note, 
+  userEmail, 
+  onEdit, 
+  onDelete, 
+  onReaction, 
+  getDisplayName,
+  isSelectionMode = false,
+  isSelected = false,
+  onSelectionChange
+}: NoteCardProps) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isFullModalOpen, setIsFullModalOpen] = useState(false);
@@ -80,16 +93,28 @@ export const NoteCard = ({ note, userEmail, onEdit, onDelete, onReaction, getDis
     return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
   };
 
-  // 全文表示が必要かどうか判定
-  const needsFullView = note.text.length > 50;
-
   return (
     <>
-      <div className={`relative p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow ${
-        getBackgroundColor(note.color)
-      }`}>
-        {isOwner && (
-          <Menu as="div" className="absolute top-2 right-2">
+      <div 
+        className={`relative p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow cursor-pointer ${
+          getBackgroundColor(note.color)
+        } ${isSelected ? 'ring-2 ring-blue-500 ring-offset-2' : ''}`}
+        onClick={() => !isSelectionMode && setIsFullModalOpen(true)}
+      >
+        {/* チェックボックス（選択モード時） */}
+        {isSelectionMode && (
+          <div className="absolute top-2 left-2" onClick={(e) => e.stopPropagation()}>
+            <input
+              type="checkbox"
+              checked={isSelected}
+              onChange={(e) => onSelectionChange?.(note.id, e.target.checked)}
+              className="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+            />
+          </div>
+        )}
+
+        {isOwner && !isSelectionMode && (
+          <Menu as="div" className="absolute top-2 right-2" onClick={(e) => e.stopPropagation()}>
             <Menu.Button className="p-1 rounded-full hover:bg-black/5 transition-colors">
               <EllipsisVerticalIcon className="w-5 h-5 text-gray-500" />
             </Menu.Button>
@@ -134,24 +159,24 @@ export const NoteCard = ({ note, userEmail, onEdit, onDelete, onReaction, getDis
           </Menu>
         )}
 
+        {/* メインコンテンツ */}
         <div className="mb-4">
-          <p className="text-gray-700 text-sm leading-relaxed">
+          {/* タイトル */}
+          {note.title && (
+            <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2 leading-tight">
+              {note.title}
+            </h3>
+          )}
+          
+          {/* リード文 */}
+          <p className="text-gray-600 text-sm leading-relaxed">
             {getPreviewText(note.text)}
           </p>
-          {needsFullView && (
-            <button
-              onClick={() => setIsFullModalOpen(true)}
-              className="inline-flex items-center mt-2 text-xs text-blue-600 hover:text-blue-800 transition-colors"
-            >
-              <EyeIcon className="w-3 h-3 mr-1" />
-              🔍 全文を表示
-            </button>
-          )}
         </div>
 
         {/* リアクション表示 */}
         {onReaction && (
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center justify-between mb-3" onClick={(e) => e.stopPropagation()}>
             <div className="flex space-x-2">
               {reactionButtons.map(({ emoji, icon: Icon, solidIcon: SolidIcon }) => {
                 const count = getReactionCount(emoji);
@@ -218,7 +243,7 @@ export const NoteCard = ({ note, userEmail, onEdit, onDelete, onReaction, getDis
         onClose={() => setIsFullModalOpen(false)}
         note={{
           id: note.id,
-          title: '', // タイトルがない場合は空文字
+          title: note.title || 'タイトルなし', // タイトルがある場合は使用、ない場合はデフォルト
           text: note.text,
           color: note.color,
           createdAt: note.createdAt,

@@ -8,22 +8,19 @@ import { ToastProvider } from './contexts/ToastContext';
 import { MembersPage } from './components/admin/MembersPage';
 import { Login } from './components/auth/Login';
 import { ThreadsList } from './components/threads/ThreadsList';
+import { CreateThreadPage } from './components/threads/CreateThreadPage';
 import { NotesList } from './components/notes/NotesList';
 import { RoleBadge } from './components/ui/RoleBadge';
 import { RegisterUserPage } from './components/auth/RegisterUserPage';
 import { ProfileSettingsPage } from './components/auth/ProfileSettingsPage';
 import { HamburgerMenu } from './components/ui/HamburgerMenu';
 import { DeveloperDashboard } from './components/admin/DeveloperDashboard';
-import { ThreadSettingsPage } from './components/threads/ThreadSettingsPage';
 
 const AppContent = () => {
   const { userData, loading, error, signOut, isAuthorized } = useAuth();
   const { getDisplayName } = useUsers();
   const { themeColors } = useTheme();
   
-  // セッション管理を一時的に無効化
-  // useSessionManager();
-  // useClientSession();
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
 
   if (loading) {
@@ -56,26 +53,26 @@ const AppContent = () => {
       }}
     >
       <header className="bg-white/80 backdrop-blur-sm shadow-md sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto py-4 px-6">
+        <div className="max-w-7xl mx-auto py-2 sm:py-4 px-3 sm:px-6">
           <div className="flex justify-between items-center">
             <h1 
-              className="text-3xl font-bold bg-gradient-to-r bg-clip-text text-transparent"
+              className="text-sm sm:text-xl md:text-3xl font-bold bg-gradient-to-r bg-clip-text text-transparent truncate whitespace-nowrap overflow-hidden max-w-[40%] sm:max-w-none"
               style={{
                 backgroundImage: `linear-gradient(to right, ${themeColors.primary}, ${themeColors.secondary})`
               }}
             >
               研究室メモアプリ
             </h1>
-            <div className="flex items-center gap-6">
-              <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-6">
+              <div className="hidden sm:flex items-center gap-2 sm:gap-3">
                 <div 
                   className="w-2 h-2 rounded-full animate-pulse"
                   style={{ backgroundColor: themeColors.accent }}
                 />
-                <span className="text-gray-600 font-medium">
+                <span className="text-gray-600 font-medium text-xs sm:text-sm truncate max-w-[80px] sm:max-w-none">
                   {getDisplayName(userData.email)}
                 </span>
-                <RoleBadge role={userData.role} />
+                <RoleBadge role={userData.role} className="scale-75 sm:scale-100" />
               </div>
               <HamburgerMenu
                 userRole={userData.role}
@@ -86,13 +83,13 @@ const AppContent = () => {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto py-8 px-6">
+      <main className="max-w-7xl mx-auto py-4 sm:py-6 md:py-8 px-3 sm:px-6">
         <Routes>
           <Route
             path="/"
             element={
               !selectedThreadId ? (
-                <div className="bg-white/60 backdrop-blur-sm rounded-2xl shadow-xl p-8">
+                <div className="bg-white/60 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-md sm:shadow-xl p-4 sm:p-6 md:p-8">
                   <ThreadsList
                     userEmail={userData.email}
                     userRole={userData.role}
@@ -101,10 +98,10 @@ const AppContent = () => {
                   />
                 </div>
               ) : (
-                <div className="space-y-6">
+                <div className="space-y-4 sm:space-y-6">
                   <button
                     onClick={() => setSelectedThreadId(null)}
-                    className="inline-flex items-center gap-2 font-medium transition-colors px-4 py-2 rounded-lg"
+                    className="inline-flex items-center gap-1 sm:gap-2 text-sm sm:text-base font-medium transition-colors px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg"
                     style={{ 
                       color: themeColors.primary,
                       backgroundColor: `${themeColors.primary}10`,
@@ -116,12 +113,12 @@ const AppContent = () => {
                       e.currentTarget.style.backgroundColor = `${themeColors.primary}10`;
                     }}
                   >
-                    <svg className="w-5 h-5" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
                       <path d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                     </svg>
                     スレッド一覧に戻る
                   </button>
-                  <div className="bg-white/60 backdrop-blur-sm rounded-2xl shadow-xl p-8">
+                  <div className="bg-white/60 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-md sm:shadow-xl p-4 sm:p-6 md:p-8">
                     <NotesList
                       threadId={selectedThreadId}
                       userEmail={userData.email}
@@ -155,7 +152,7 @@ const AppContent = () => {
             path="/developer-dashboard"
             element={
               userData.role === 'developer' ? (
-                <div className="bg-white/60 backdrop-blur-sm rounded-2xl shadow-xl p-8">
+                <div className="bg-white/60 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-md sm:shadow-xl p-4 sm:p-6 md:p-8">
                   <DeveloperDashboard />
                 </div>
               ) : (
@@ -165,7 +162,7 @@ const AppContent = () => {
           />
           <Route
             path="/create-thread"
-            element={<ThreadSettingsPage />}
+            element={<CreateThreadPage />}
           />
         </Routes>
       </main>
@@ -181,7 +178,7 @@ function App() {
           <ToastProvider>
             <Router>
               <AppContent />
-              <ErrorBadge />
+              <AdminErrorBadge />
             </Router>
           </ToastProvider>
         </ThemeProvider>
@@ -189,5 +186,18 @@ function App() {
     </AuthProvider>
   );
 }
+
+// 管理者のみにエラーバッジを表示するためのラッパーコンポーネント
+const AdminErrorBadge = () => {
+  const { userData } = useAuth();
+  
+  // 管理者（developer または professor）の場合のみ ErrorBadge を表示
+  if (userData && (userData.role === 'developer' || userData.role === 'professor')) {
+    return <ErrorBadge />;
+  }
+  
+  // それ以外のユーザーには表示しない
+  return null;
+};
 
 export default App;

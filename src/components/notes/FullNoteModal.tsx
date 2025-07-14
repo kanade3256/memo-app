@@ -58,7 +58,7 @@ export const FullNoteModal = ({
         onClose={onClose}
         onKeyDown={handleKeyDown}
       >
-        {/* 背景オーバ�Eレイ */}
+        {/* 背景オーバーレイ */}
         <Transition.Child
           as={Fragment}
           enter="ease-out duration-300"
@@ -68,11 +68,11 @@ export const FullNoteModal = ({
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <div className="fixed inset-0 bg-black/50" />
+          <div className="fixed inset-0 bg-black/60" />
         </Transition.Child>
 
         <div className="fixed inset-0 overflow-y-auto">
-          <div className="flex min-h-full items-center justify-center p-4">
+          <div className="flex min-h-full items-center justify-center p-2 sm:p-4">
             <Transition.Child
               as={Fragment}
               enter="ease-out duration-300"
@@ -83,37 +83,38 @@ export const FullNoteModal = ({
               leaveTo="opacity-0 scale-95"
             >
               <Dialog.Panel 
-                className={`w-full max-w-2xl transform overflow-hidden rounded-2xl shadow-2xl transition-all
-                          ${getBackgroundColor(note.color)} border-2 p-8`}
+                className={`w-full max-w-sm sm:max-w-lg lg:max-w-3xl xl:max-w-4xl transform overflow-hidden 
+                          rounded-xl sm:rounded-2xl shadow-2xl transition-all
+                          ${getBackgroundColor(note.color)} border-2 p-4 sm:p-6 lg:p-8`}
               >
                 {/* ヘッダー */}
-                <div className="flex items-start justify-between mb-6">
-                  <div className="flex items-center gap-3">
-                    <EyeIcon className="h-6 w-6 text-gray-600" />
-                    <Dialog.Title className="text-2xl font-bold text-gray-900">
+                <div className="flex items-start justify-between mb-4 sm:mb-6">
+                  <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                    <EyeIcon className="h-5 w-5 sm:h-6 sm:w-6 text-gray-600 flex-shrink-0" />
+                    <Dialog.Title className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 truncate">
                       {note.title || 'メモ詳細'}
                     </Dialog.Title>
                   </div>
                   <button
                     onClick={onClose}
-                    className="rounded-full p-2 hover:bg-black/10 transition-colors"
+                    className="rounded-full p-1.5 sm:p-2 hover:bg-black/10 transition-colors flex-shrink-0"
                   >
-                    <XMarkIcon className="h-6 w-6 text-gray-500" />
+                    <XMarkIcon className="h-5 w-5 sm:h-6 sm:w-6 text-gray-500" />
                   </button>
                 </div>
 
-                {/* 作�E老E�E日時情報 */}
-                <div className="mb-6 p-4 bg-white/70 rounded-lg border border-gray-200">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-gray-700">作�E老E</span>
-                      <span className="text-sm text-gray-900 font-semibold">
+                {/* 作成者・日時情報 */}
+                <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-white/70 rounded-lg border border-gray-200">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                      <span className="text-xs sm:text-sm font-medium text-gray-700">作成者</span>
+                      <span className="text-sm sm:text-base text-gray-900 font-semibold truncate">
                         {getDisplayName(note.createdBy)}
                       </span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-gray-700">作�E日晁E</span>
-                      <span className="text-sm text-gray-600">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                      <span className="text-xs sm:text-sm font-medium text-gray-700">作成日時</span>
+                      <span className="text-xs sm:text-sm text-gray-600">
                         {note.createdAt instanceof Date 
                           ? note.createdAt.toLocaleString('ja-JP', {
                               year: 'numeric',
@@ -135,20 +136,20 @@ export const FullNoteModal = ({
                   </div>
                 </div>
 
-                {/* 本斁E�E斁E*/}
-                <div className="mb-8">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">冁E��</h3>
-                  <div className="bg-white/80 rounded-lg p-6 border border-gray-200 min-h-[200px]">
-                    <p className="text-gray-800 whitespace-pre-wrap leading-relaxed">
+                {/* 本文内容 */}
+                <div className="mb-6 sm:mb-8">
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">内容</h3>
+                  <div className="bg-white/80 rounded-lg p-4 sm:p-6 border border-gray-200 min-h-[150px] sm:min-h-[200px] lg:min-h-[250px]">
+                    <p className="text-sm sm:text-base lg:text-lg text-gray-800 whitespace-pre-wrap leading-relaxed">
                       {note.text}
                     </p>
                   </div>
                 </div>
 
-                {/* リアクション表示�E�もしあれ�E�E�E*/}
+                {/* リアクション表示（もしあれば） */}
                 {note.reactions && note.reactions.length > 0 && (
-                  <div className="mb-6">
-                    <h4 className="text-sm font-medium text-gray-700 mb-3">リアクション</h4>
+                  <div className="mb-4 sm:mb-6">
+                    <h4 className="text-sm sm:text-base font-medium text-gray-700 mb-3">リアクション</h4>
                     <div className="flex flex-wrap gap-2">
                       {(() => {
                         const reactionCounts = note.reactions!.reduce((acc: Record<string, number>, reaction) => {
@@ -159,10 +160,10 @@ export const FullNoteModal = ({
                         return Object.entries(reactionCounts).map(([emoji, count]) => (
                           <div
                             key={emoji}
-                            className="flex items-center gap-1 px-3 py-1 bg-white/80 rounded-full border border-gray-200"
+                            className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 bg-white/80 rounded-full border border-gray-200"
                           >
-                            <span className="text-lg">{emoji}</span>
-                            <span className="text-sm font-medium text-gray-700">{count}</span>
+                            <span className="text-base sm:text-lg">{emoji}</span>
+                            <span className="text-xs sm:text-sm font-medium text-gray-700">{count}</span>
                           </div>
                         ));
                       })()}
@@ -170,15 +171,15 @@ export const FullNoteModal = ({
                   </div>
                 )}
 
-                {/* 閉じる�Eタン */}
-                <div className="flex justify-center">
+                {/* 閉じるボタン */}
+                <div className="flex justify-center pt-4 sm:pt-6 border-t border-gray-200">
                   <button
                     onClick={onClose}
-                    className="px-8 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 
+                    className="w-full sm:w-auto px-6 sm:px-8 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 
                              focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 
-                             transition-colors font-medium"
+                             transition-colors font-medium text-sm sm:text-base"
                   >
-                    閉じめE
+                    閉じる
                   </button>
                 </div>
               </Dialog.Panel>

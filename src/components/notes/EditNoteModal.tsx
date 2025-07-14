@@ -51,7 +51,7 @@ export const EditNoteModal = ({
         </Transition.Child>
 
         <div className="fixed inset-0 overflow-y-auto">
-          <div className="flex min-h-full items-center justify-center p-4">
+          <div className="flex min-h-full items-center justify-center p-2 sm:p-4">
             <Transition.Child
               as={Fragment}
               enter="ease-out duration-300"
@@ -61,64 +61,84 @@ export const EditNoteModal = ({
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 shadow-xl transition-all">
-                <div className="flex items-center justify-between mb-4">
-                  <Dialog.Title className="text-lg font-medium text-gray-900">
+              <Dialog.Panel className="w-full max-w-xs sm:max-w-md lg:max-w-lg transform overflow-hidden rounded-xl sm:rounded-2xl bg-white p-4 sm:p-6 shadow-xl transition-all">
+                <div className="flex items-center justify-between mb-4 sm:mb-6">
+                  <Dialog.Title className="text-base sm:text-lg font-medium text-gray-900">
                     メモを編集
                   </Dialog.Title>
                   <button
                     onClick={onClose}
-                    className="rounded-full p-1 hover:bg-gray-100 transition-colors"
+                    className="rounded-full p-1.5 sm:p-2 hover:bg-gray-100 transition-colors"
                   >
-                    <XMarkIcon className="w-5 h-5 text-gray-500" />
+                    <XMarkIcon className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
                   </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
                   <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      メモ内容
+                    </label>
                     <textarea
                       value={text}
                       onChange={(e) => setText(e.target.value)}
-                      rows={4}
-                      className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="メモを入力..."
+                      rows={6}
+                      className="w-full p-3 sm:p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base resize-none"
+                      placeholder="メモの内容を入力してください..."
                     />
+                    <div className="mt-2 text-xs sm:text-sm text-gray-500">
+                      {text.length}/1000文字
+                    </div>
                   </div>
 
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm text-gray-700">色:</span>
-                    <div className="flex gap-2">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                      カラーテーマ
+                    </label>
+                    <div className="grid grid-cols-5 gap-2 sm:gap-3">
                       {COLORS.map((c) => (
                         <button
                           key={c}
                           type="button"
                           onClick={() => setColor(c)}
-                          className={`w-6 h-6 rounded-full ${
+                          className={`aspect-square rounded-lg border-2 transition-all duration-200 ${
                             getBackgroundColor(c)
                           } ${
-                            color === c ? 'ring-2 ring-blue-500 ring-offset-2' : ''
+                            color === c 
+                              ? 'border-blue-500 ring-2 ring-blue-200 scale-105' 
+                              : 'border-gray-300 hover:border-gray-400'
                           }`}
-                        />
+                          title={getColorName(c)}
+                        >
+                          <div className={`w-full h-full rounded-md ${getBackgroundColor(c)}`} />
+                        </button>
                       ))}
                     </div>
                   </div>
 
-                  <div className="flex justify-end gap-3 mt-6">
+                  <div className="flex flex-col sm:flex-row gap-3 pt-4 sm:pt-6 border-t border-gray-200">
                     <button
                       type="button"
                       onClick={onClose}
-                      className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                      className="order-2 sm:order-1 px-4 sm:px-6 py-2.5 sm:py-3 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
                     >
                       キャンセル
                     </button>
                     <button
                       type="submit"
                       disabled={isSubmitting || !text.trim()}
-                      className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 
+                      className="order-1 sm:order-2 flex-1 sm:flex-none px-4 sm:px-6 py-2.5 sm:py-3 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 
                         focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 
                         disabled:hover:bg-blue-600 transition-colors"
                     >
-                      {isSubmitting ? '保存中...' : '保存'}
+                      {isSubmitting ? (
+                        <div className="flex items-center justify-center">
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          保存中...
+                        </div>
+                      ) : (
+                        '保存する'
+                      )}
                     </button>
                   </div>
                 </form>
@@ -140,4 +160,15 @@ const getBackgroundColor = (color: string) => {
     purple: 'bg-purple-100',
   };
   return colors[color] || 'bg-yellow-100';
+};
+
+const getColorName = (color: string) => {
+  const names: { [key: string]: string } = {
+    yellow: 'イエロー',
+    green: 'グリーン',
+    blue: 'ブルー',
+    pink: 'ピンク',
+    purple: 'パープル',
+  };
+  return names[color] || 'イエロー';
 };

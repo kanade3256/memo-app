@@ -39,41 +39,43 @@ export const ThreadCard = ({
 
   return (
     <>
-      <div className="group relative bg-white/60 backdrop-blur-sm rounded-lg p-6 shadow-sm 
-                    hover:shadow-md transition-all duration-200 cursor-pointer"
+      <div className="group relative bg-white/60 backdrop-blur-sm rounded-lg p-3 sm:p-5 shadow-sm 
+                    hover:shadow-md transition-all duration-200 cursor-pointer w-full"
            onClick={() => !isEditing && onSelect()}>
         {isEditing ? (
-          <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2" onClick={(e) => e.stopPropagation()}>
             <input
               type="text"
               value={newTitle}
               onChange={(e) => setNewTitle(e.target.value)}
-              className="flex-1 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-auto text-sm"
               autoFocus
             />
-            <button
-              onClick={handleEdit}
-              className="px-3 py-2 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600"
-            >
-              保存
-            </button>
-            <button
-              onClick={() => {
-                setNewTitle(thread.title);
-                setIsEditing(false);
-              }}
-              className="px-3 py-2 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
-            >
-              キャンセル
-            </button>
+            <div className="flex gap-2 w-full sm:w-auto">
+              <button
+                onClick={handleEdit}
+                className="flex-1 sm:flex-none px-3 py-1.5 text-xs sm:text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600"
+              >
+                保存
+              </button>
+              <button
+                onClick={() => {
+                  setNewTitle(thread.title);
+                  setIsEditing(false);
+                }}
+                className="flex-1 sm:flex-none px-3 py-1.5 text-xs sm:text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
+              >
+                キャンセル
+              </button>
+            </div>
           </div>
         ) : (
           <>
-            <h3 className="text-lg font-medium text-gray-900">{thread.title}</h3>
+            <h3 className="text-base sm:text-lg font-medium text-gray-900 pr-6">{thread.title}</h3>
             {canEdit && (
-              <Menu as="div" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+              <Menu as="div" className="absolute top-1 right-1 sm:top-2 sm:right-2 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
                 <Menu.Button className="p-1 rounded-full hover:bg-black/5 transition-colors" onClick={(e) => e.stopPropagation()}>
-                  <EllipsisVerticalIcon className="w-5 h-5 text-gray-500" />
+                  <EllipsisVerticalIcon className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
                 </Menu.Button>
                 <Transition
                   as={Fragment}
@@ -123,7 +125,7 @@ export const ThreadCard = ({
             )}
           </>
         )}
-        <div className="mt-2 text-sm text-gray-500">
+        <div className="mt-2 text-xs sm:text-sm text-gray-500">
           作成者: {getDisplayName(thread.createdBy)}
         </div>
         <div className="text-xs text-gray-400">

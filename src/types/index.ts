@@ -40,3 +40,7 @@ export interface Thread {
   description: string;
   pinned: boolean;
 }
+
+// 新しい機能用の型定義をエクスポート
+export * from './logs';
+export * from './auth';

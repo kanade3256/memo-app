@@ -2,6 +2,7 @@ import type { UserRole } from '../../types/auth';
 
 interface RoleBadgeProps {
   role: UserRole;
+  className?: string;
 }
 
 const roleColors: Record<UserRole, { bg: string; text: string }> = {
@@ -25,12 +26,12 @@ const roleLabels: Record<UserRole, string> = {
   developer: '開発者',
 };
 
-export const RoleBadge = ({ role }: RoleBadgeProps) => {
+export const RoleBadge = ({ role, className = '' }: RoleBadgeProps) => {
   const { bg, text } = roleColors[role];
   
   return (
     <span
-      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${bg} ${text}`}
+      className={`inline-flex items-center px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full text-xs font-medium ${bg} ${text} ${className}`}
     >
       {roleLabels[role]}
     </span>
